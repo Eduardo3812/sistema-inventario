@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- ===================== Formulario: nueva meta ===================== -->
+<div class="mb-8 rounded-xl bg-white p-6 shadow">
+  <h1 class="mb-4 text-xl font-bold">🎯 Nueva meta</h1>
+
+  <!--
+    method="post": el navegador arma el body con estos campos (formato
+    x-www-form-urlencoded). En FastAPI los recibimos con `Form(...)` en la
+    ruta POST /metas/nuevo. Una meta arranca SIEMPRE en 0% de progreso,
+    sin tareas todavía, por eso este formulario no pide nada más que el
+    título y una descripción opcional.
+  -->
+  <form method="post" action="/metas/nuevo" class="space-y-4">
+    <div>
+      <label class="mb-1 block text-sm font-medium">Título de la meta</label>
+      <input type="text" name="titulo" required placeholder="Ej: Aprender FastAPI a fondo"
+             class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium">Descripción (opcional)</label>
+      <textarea name="descripcion" rows="2"
+                class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+    </div>
+    <button type="submit"
+            class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700">
+      Crear meta
+    </button>
+  </form>
+</div>
+
+<!-- ===================== Metas activas con su progreso ===================== -->
+<h2 class="mb-4 text-xl font-bold">Tus metas activas</h2>
+
+{% if not metas %}
+  <div class="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">
+    Todavía no creaste ninguna meta. Arrancá con el formulario de arriba.
+  </div>
+{% else %}
+  <div class="space-y-6">
+    {% for meta in metas %}
+      <div class="rounded-xl bg-white p-6 shadow">
+
+        <!-- Encabezado: título + porcentaje grande -->
+        <div class="flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <h3 class="text-lg font-semibold text-gray-800">{{ meta.titulo }}</h3>
+            {% if meta.descripcion %}
+              <p class="mt-1 text-sm text-gray-500">{{ meta.descripcion }}</p>
+            {% endif %}
+          </div>
+          <span class="whitespace-nowrap text-2xl font-bold text-indigo-600">
+            {{ meta.progreso_porcentaje }}%
+          </span>
+        </div>
+
+        <!--
+          Barra de progreso: el "track" gris siempre mide el 100% del
+          ancho disponible (w-full), y adentro pintamos un relleno cuyo
+          ancho es el porcentaje real de esta meta en particular. Como ese
+          porcentaje cambia meta por meta, no puede ser una clase fija de
+          Tailwind (no existe "w-37%"): por eso acá SÍ usamos un
+          style="width: ...%" armado con Jinja2, la única excepción a
+          "todo con clases de Tailwind" en esta app.
+        -->
+        <div class="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
+          <div class="h-2.5 rounded-full bg-indigo-600 transition-all"
+               style="width: {{ meta.progreso_porcentaje }}%;"></div>
+        </div>
+        <p class="mt-1 text-xs text-gray-500">
+          {{ meta.tareas_completadas }} de {{ meta.total_tareas }} tareas completadas
+        </p>
+
+        <!-- Lista de tareas de esta meta -->
+        <ul class="mt-4 space-y-2">
+          {% for tarea in meta.tareas %}
+            <li class="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2">
+              <span class="text-sm
+                {% if tarea.estado.value == 'completado' %}
+                  text-gray-400 line-through decoration-gray-400
+                {% else %}
+                  text-gray-700
+                {% endif %}">
+                {{ tarea.titulo }}
+              </span>
+
+              {% if tarea.estado.value == "pendiente" %}
+                <!--
+                  Manejo de ruta POST: un form chiquito que solo existe
+                  para disparar la actualización de estado de ESTA tarea
+                  puntual. No hace falta JavaScript ni un formulario
+                  gigante: HTML puro alcanza para esta interacción.
+                -->
+                <form method="post" action="/tareas/{{ tarea.id }}/completar">
+                  <button type="submit"
+                          class="whitespace-nowrap rounded-lg bg-green-100 px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-200">
+                    ✓ Completar
+                  </button>
+                </form>
+              {% else %}
+                <span class="whitespace-nowrap text-xs font-medium text-green-600">✓ Hecha</span>
+              {% endif %}
+            </li>
+          {% else %}
+            <li class="rounded-lg border border-dashed border-gray-200 px-3 py-2 text-sm text-gray-400">
+              Todavía no le agregaste tareas a esta meta.
+            </li>
+          {% endfor %}
+        </ul>
+
+        <!-- Mini formulario: agregar una tarea nueva a ESTA meta -->
+        <form method="post" action="/metas/{{ meta.id }}/tareas/nuevo" class="mt-4 flex gap-2">
+          <input type="text" name="titulo" required placeholder="Nueva tarea para esta meta..."
+                 class="flex-1 rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+          <button type="submit"
+                  class="whitespace-nowrap rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700">
+            + Agregar tarea
+          </button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

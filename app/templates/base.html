@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Tareas y Metas{% endblock %}</title>
+
+  <!--
+    Tailwind vía CDN (el "play CDN"): genera las clases al vuelo con JS en
+    el navegador. Para un proyecto real compilarías Tailwind con su CLI o
+    PostCSS y servirías un único .css chiquito y optimizado, pero acá el
+    CDN nos ahorra toda la configuración de build y nos deja enfocarnos en
+    el backend, que es lo que estamos aprendiendo.
+  -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-800">
+
+  <nav class="border-b border-gray-200 bg-white">
+    <div class="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
+      <a href="/" class="text-lg font-semibold text-indigo-600">✅ Tareas y Metas</a>
+      <div class="flex gap-4 text-sm">
+        <a href="/" class="text-gray-600 hover:text-indigo-600">Dashboard</a>
+        <a href="/historial" class="text-gray-600 hover:text-indigo-600">📜 Historial</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="mx-auto max-w-4xl px-4 py-8">
+
+    <!--
+      Mensaje flash (ver `redirigir_con_mensaje` en main.py). Solo la ruta
+      del dashboard pasa `mensaje`/`categoria_mensaje` en el contexto, así
+      que en cualquier otra página esta variable viene "undefined" y
+      Jinja2 la trata como falsy: el `if` simplemente no entra, sin tirar
+      error.
+    -->
+    {% if mensaje %}
+      <div class="mb-6 rounded-lg border px-4 py-3 text-sm
+        {% if categoria_mensaje == 'error' %}
+          border-red-200 bg-red-50 text-red-700
+        {% else %}
+          border-green-200 bg-green-50 text-green-700
+        {% endif %}">
+        {{ mensaje }}
+      </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
